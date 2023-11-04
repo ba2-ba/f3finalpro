@@ -1,141 +1,103 @@
-const ip=localStorage.getItem("ip");
-const about=document.getElementsByClassName("about")[0];
-const moreInfo=document.getElementsByClassName("more-info")[0];
-const cardContainer=document.getElementsByClassName("card-container")[0];
-const map=document.getElementsByClassName("map")[0];
-const searchInput=document.getElementById("post-ofc-search")
-
-const heroPage=document.getElementById("hero-page");
-const loader=document.getElementsByClassName("loader-section")[0];
-
-//user latitude and longitude;
-const userLatitude=localStorage.getItem("lat");
-const userLongitude=localStorage.getItem("long");
-
-
-var message;
-var postOfcData;
-document.getElementsByClassName('ip-add')[0].innerText=ip;
-const date=new Date();
-
-
-
-//fetch api based on ip address
-async function fetchApi(ip){
-    try{
-        const response= await fetch(`https://ipapi.co/${ip}/json/`)
-        const data=await response.json();
-        renderMap(data.latitude, data.longitude)
-        await fetchPostalApi(data.postal);
-        renderData(data);
-        loader.style.display="none";
-        heroPage.style.display="block";
-    
-    }
-    catch(error){
-        console.log(error);
-        alert('server not responding try again')
-    }
-}
-
-fetchApi(ip);
-
-
-//render map
-function renderMap(lat,long){
-    map.innerHTML=`
-    <iframe src="https://maps.google.com/maps?q=${userLatitude}, ${userLongitude}&output=embed" frameborder="0" style="border: 0;"></iframe>
-            </div>
-
-    `
-}
-
-
-//fetch api based on postal code
-async function fetchPostalApi(pincode){
-    try{
-        const response=await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
-        const data=await response.json();
-        message=data[0].Message;
-        renderPostalApiData(data[0].PostOffice);
-        postOfcData=data[0].PostOffice;
-    }
-    catch(e){
-        console.log(e);
-    }
-
-}
-
-
-// render data coome from Ip api
-function renderData(data){
-    console.log(data);
-    about.innerHTML="";
-    about.innerHTML=`
-    <h1>IP Address:<span class="ip-add">${data.ip}</span></h1>
-    <div class="about-r-1">
-        <p id="lat">Lat: <span> ${data.latitude}</span></p>
-        <p>City: <span>${data.city}</span></p>
-        <p>Organisation: <span>${data.org}</span></p>
-    </div>
-    <div class="about-r-2">
-        <p>Long: <span>${data.longitude}</span></p>
-        <p>Region: <span>${data.region}</span></p>
-        <p>Hostname: <span>${data.network}</span></p>
-    </div>
-
-    `
-
-    moreInfo.innerHTML="";
-    moreInfo.innerHTML=`
-    <h3>More Information About You</h3>
-    <p>Time Zone: <span>${data.timezone}</span></p>
-    <p>Date And Time: <span>${date}</span></p>
-    <p>Pincode: <span>${data.postal}</span></p>
-    <p >Message: <span>${message}</span></p>
-    `
-
-
-   
-}
-
-
-//render postal api data
-function renderPostalApiData(data){
-    cardContainer.innerHTML="";
-
-    data.forEach((ele) => {
-        const div=document.createElement("div");
-        div.className="card";
-        div.innerHTML=`
-        <h4>Name: <span>${ele.Name}</span></h4>
-        <h4>Branch Type: <span>${ele.BranchType}</span></h4>
-        <h4>Delivery Status: <span>${ele.DeliveryStatus}</span></h4>
-        <h4>District: <span>${ele.District}</span></h4>
-        <h4>Divison: <span>${ele.Division}</span></h4>
-       
-        `
-        cardContainer.appendChild(div);
-        
-    });
-
-
-}
-
-
-searchInput.addEventListener("keyup" , (event)=>{
-    const searchText=event.target.value.toLowerCase();
-    filterPostOfc(searchText,postOfcData);
-
-})
-
-
-//filter card based on user input
-function filterPostOfc(searchText,postOfcData){
-    const filterData=postOfcData.filter((ele)=>{
-        return ele.Name.toLowerCase().includes(searchText);
-
-    })
-
-    renderPostalApiData(filterData)
-}
+async function gotogeo(){
+    try{ let ip=localStorage.getItem('ip');
+     let geo=await fetch(`https://ipinfo.io/${ip}/geo?token=9692db051c452b`);
+ let ans=await geo.json();
+ console.log(ans);
+ printdata(ans);
+ }
+ catch(err){
+     console.log("can't fetch data from ip")
+ }}
+ gotogeo();
+ function printdata(detail){
+     var latLong = detail.loc.split(",");
+     let lat = latLong[0].trim();
+     let long = latLong[1].trim();
+     let locationdetail=document.getElementById('locdetail');
+     locationdetail.innerHTML=
+     `<p>IP Address:<span id="address">${detail.ip}</span></p>
+      <div id="ipaddress">
+      <div><p>Lat:<span>${lat}</span></p>
+                     <p>Long:<span>${long}</span> </p></div>
+         <div><p>City: <span>${detail.city}</span></p>
+             <p>Region: <span>${detail.region}</span> </p></div>
+         <div>
+             <p>Organisation:<span>${detail.org}</span></p>
+                     <p>Hostname:<span>${detail.postal}</span> </p></div>
+         </div>`
+ 
+     let timezone=document.getElementById('timezone');
+     timezone.innerText=detail.timezone;
+     setInterval(fun,1000);
+     function fun(){
+         let dtime = new Date().toLocaleString("en-US", { timeZone: `${detail.timezone}` });      
+         let dateandtime=document.getElementById('dateandtime');
+         dateandtime.innerText=dtime;        
+     }
+     let pincode=document.getElementById('pincode');
+ //window.location.href='detail.html'
+      pincode.innerText=detail.postal;
+ printpostaldetail(detail.postal);
+ }
+ 
+ async function printpostaldetail(pincode){
+     let postaldata= await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+     let res= await postaldata.json();
+     localStorage.setItem('postoffices',JSON.stringify(res[0].PostOffice));    
+     getpostoffice();
+     
+ }
+ 
+ function getpostoffice(){
+     let data=JSON.parse(localStorage.getItem('postoffices'));
+     let postofficebox=document.getElementById('postoffices');
+     let msg=document.getElementById('msg');
+     msg.innerText=data.length;
+     postofficebox.innerHTML='';
+     for(let i=0;i<data.length;i++){
+     postofficebox.innerHTML+=`<div id="details">
+     <p>Name <span>: ${data[i].Name}</span></p>
+     <p>Branch Type <span>: ${data[i].BranchType}</span></p>
+     <p>Delivery Status <span>: ${data[i].DeliveryStatus}</span></p>
+     <p>District <span>: ${data[i].District}</span></p>
+     <p>Division <span>: ${data[i].Division}</span></p>
+ </div> `}  
+ }
+ 
+ 
+ let searchquery=document.getElementById('filter');
+ searchquery.addEventListener('keyup',()=>{
+     let q=document.getElementById('filter').value;
+   //  let arr=filterbyname(query);
+      let query=q.toLowerCase();
+      console.log(query);  
+   let data=JSON.parse(localStorage.getItem('postoffices'));
+     let postofficebox=document.getElementById('postoffices');
+    postofficebox.innerHTML='';
+     for(let i=0;i<data.length;i++){
+         let d=data[i].Name;
+         let n=d.toLowerCase();
+        if(n.includes(query)){
+     postofficebox.innerHTML+=`<div id="details">
+     <p>Name <span>: ${data[i].Name}</span></p>
+     <p>Branch Type <span>: ${data[i].BranchType}</span></p>
+     <p>Delivery Status <span>: ${data[i].DeliveryStatus}</span></p>
+     <p>District <span>: ${data[i].District}</span></p>
+     <p>Division <span>: ${data[i].Division}</span></p>
+ </div> `}  }
+ 
+ for(let i=0;i<data.length;i++){
+     let d=data[i].BranchType;
+         let n=d.toLowerCase();
+        if(n.includes(query)){
+  postofficebox.innerHTML+=`<div id="details">
+  <p>Name <span>: ${data[i].Name}</span></p>
+  <p>Branch Type <span>: ${data[i].BranchType}</span></p>
+  <p>Delivery Status <span>: ${data[i].DeliveryStatus}</span></p>
+  <p>District <span>: ${data[i].District}</span></p>
+  <p>Division <span>: ${data[i].Division}</span></p>
+ </div> `}  }
+ if(query.trim()===''){
+   getpostoffice();
+ }
+ })
