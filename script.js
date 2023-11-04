@@ -1,19 +1,46 @@
-"https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"
+const ipAdd=document.getElementsByClassName("ip")[0];
+const startBtn=document.getElementById("get-started");
 
- async function fetchdata(){
-try{
-let res= await  fetch("https://api.ipify.org?format=json");
-let data=await res.json();
-console.log(data.ip);
-localStorage.setItem('ip',data.ip);
-ipadd.innerHTML=`Your Current IP Address is <span id="ipad">${data.ip}</span>`
-}catch(err){
-    console.log('something wrong');
+var location;
+
+//fetch ip address
+async function fetchIP(){
+    try{
+        const response= await fetch(`https://api.ipify.org/?format=json`)
+        const data=await response.json();
+        // console.log(data);
+        ipAdd.innerText=data.ip;
+        storeIp(data);
+    }
+    catch(error){
+        console.log(error);
+    }
+
 }
- }
-getstart.addEventListener('click',()=>{    
-    window.location.href='detail.html';
-    //gotogeo(ip);
+
+fetchIP();
+
+
+startBtn.addEventListener("click", async()=>{
+    await navigator.geolocation.getCurrentPosition(sucess,faild)
+    // window.location.href="../main-page/main.html"
+    
 })
-fetchdata();
+
+
+function storeIp(data){
+    localStorage.setItem("ip", data.ip);
+
+}
+
+function sucess(position){
+    console.log(position);
+    localStorage.setItem("lat", position.coords.latitude)
+    localStorage.setItem("long", position.coords.longitude)
+    window.location.href="./main.html"
    
+}
+
+function faild(){
+    alert("give your loacation access")
+}
